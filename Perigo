@@ -1,0 +1,447 @@
+-- R7FLOW AUTH - Source Viewer (Cyberpunk Dark — UI REFINADA)
+-- NUCLEO DO SCRIPT INTOCADO. Apenas a camada visual foi retrabalhada.
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+-- ==================== PALETA CYBERPUNK DARK ====================
+local BG       = Color3.fromRGB(4, 3, 8)
+local HEADER   = Color3.fromRGB(10, 5, 20)
+local TXTBG    = Color3.fromRGB(10, 6, 20)
+local SCROLLBG = Color3.fromRGB(2, 1, 5)
+local BTNGET   = Color3.fromRGB(0, 255, 220)
+local BTNSAVE  = Color3.fromRGB(200, 0, 255)
+local BTNCLR   = Color3.fromRGB(255, 0, 110)
+local TXT      = Color3.fromRGB(210, 230, 255)
+local SUBTXT   = Color3.fromRGB(100, 120, 160)
+local BORDER   = Color3.fromRGB(0, 200, 240)
+local GLOW     = Color3.fromRGB(180, 0, 255)
+
+-- helper de tween enxuto
+local function tw(obj, props, t, style, dir, rep, rev)
+    local info = TweenInfo.new(
+        t or 0.15,
+        style or Enum.EasingStyle.Quad,
+        dir or Enum.EasingDirection.Out,
+        rep or 0,
+        rev or false
+    )
+    local tn = TweenService:Create(obj, info, props)
+    tn:Play()
+    return tn
+end
+
+local old = PlayerGui:FindFirstChild("R7FLOW_AUTH")
+if old then old:Destroy() end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "R7FLOW_AUTH"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.DisplayOrder = 999
+ScreenGui.Parent = PlayerGui
+
+-- Painel 340 x 340
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 340, 0, 340)
+MainFrame.Position = UDim2.new(0.5, -170, 0.5, -170)
+MainFrame.BackgroundColor3 = BG
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Parent = ScreenGui
+
+local c1 = Instance.new("UICorner"); c1.CornerRadius = UDim.new(0, 8); c1.Parent = MainFrame
+
+local stroke1 = Instance.new("UIStroke")
+stroke1.Color = BORDER
+stroke1.Thickness = 1.2
+stroke1.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+stroke1.Parent = MainFrame
+
+local stroke2 = Instance.new("UIStroke")
+stroke2.Color = GLOW
+stroke2.Thickness = 2.5
+stroke2.Transparency = 0.75
+stroke2.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+stroke2.Parent = MainFrame
+-- pulso do glow externo (loop reverso)
+TweenService:Create(stroke2,
+    TweenInfo.new(1.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
+    { Transparency = 0.45 }):Play()
+
+local bgGradient = Instance.new("UIGradient")
+bgGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(15, 6, 28)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(4, 3, 8)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 3, 22)),
+}
+bgGradient.Rotation = 45
+bgGradient.Parent = MainFrame
+
+-- ==================== HEADER ====================
+local Header = Instance.new("Frame")
+Header.Size = UDim2.new(1, 0, 0, 28)
+Header.BackgroundColor3 = HEADER
+Header.BorderSizePixel = 0
+Header.Parent = MainFrame
+local hc = Instance.new("UICorner"); hc.CornerRadius = UDim.new(0, 8); hc.Parent = Header
+local hf = Instance.new("Frame")
+hf.Size = UDim2.new(1, 0, 0, 8); hf.Position = UDim2.new(0, 0, 1, -8)
+hf.BackgroundColor3 = HEADER; hf.BorderSizePixel = 0; hf.Parent = Header
+
+local headerLine = Instance.new("Frame")
+headerLine.Size = UDim2.new(1, -12, 0, 1)
+headerLine.Position = UDim2.new(0, 6, 1, -1)
+headerLine.BackgroundColor3 = BORDER
+headerLine.BorderSizePixel = 0
+headerLine.ZIndex = 2
+headerLine.Parent = Header
+local headerLineGrad = Instance.new("UIGradient")
+headerLineGrad.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, BTNGET),
+    ColorSequenceKeypoint.new(1, BTNSAVE),
+}
+headerLineGrad.Parent = headerLine
+-- gradiente correndo na linha do header
+TweenService:Create(headerLineGrad,
+    TweenInfo.new(3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
+    { Offset = Vector2.new(1, 0) }):Play()
+
+-- LED pulsante (decorativo)
+local led = Instance.new("Frame")
+led.Size = UDim2.new(0, 6, 0, 6)
+led.Position = UDim2.new(0, 10, 0.5, -3)
+led.BackgroundColor3 = BTNGET
+led.BorderSizePixel = 0
+led.ZIndex = 3
+led.Parent = Header
+local ledc = Instance.new("UICorner"); ledc.CornerRadius = UDim.new(1, 0); ledc.Parent = led
+local ledGlow = Instance.new("UIStroke")
+ledGlow.Color = BTNGET; ledGlow.Thickness = 2; ledGlow.Transparency = 0.4; ledGlow.Parent = led
+TweenService:Create(ledGlow,
+    TweenInfo.new(1.1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
+    { Transparency = 0.88 }):Play()
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -70, 1, 0); Title.Position = UDim2.new(0, 22, 0, 0)
+Title.BackgroundTransparency = 1; Title.Text = "R7FLOW AUTH"
+Title.TextColor3 = TXT; Title.TextSize = 13; Title.Font = Enum.Font.GothamBold
+Title.TextXAlignment = Enum.TextXAlignment.Left; Title.ZIndex = 3; Title.Parent = Header
+
+local titleStroke = Instance.new("UIStroke")
+titleStroke.Color = BTNGET
+titleStroke.Thickness = 1
+titleStroke.Transparency = 0.5
+titleStroke.Parent = Title
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 22, 0, 22); CloseBtn.Position = UDim2.new(1, -28, 0, 3)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(30, 3, 15)
+CloseBtn.Text = "X"
+CloseBtn.TextColor3 = BTNCLR; CloseBtn.TextSize = 12; CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.BorderSizePixel = 0; CloseBtn.AutoButtonColor = false; CloseBtn.ZIndex = 3
+CloseBtn.Parent = Header
+local cc = Instance.new("UICorner"); cc.CornerRadius = UDim.new(0, 5); cc.Parent = CloseBtn
+local closeStroke = Instance.new("UIStroke")
+closeStroke.Color = BTNCLR; closeStroke.Thickness = 1; closeStroke.Parent = CloseBtn
+CloseBtn.MouseEnter:Connect(function()
+    tw(CloseBtn, { BackgroundColor3 = Color3.fromRGB(55, 5, 25) }, 0.12)
+    tw(closeStroke, { Thickness = 2 }, 0.12)
+end)
+CloseBtn.MouseLeave:Connect(function()
+    tw(CloseBtn, { BackgroundColor3 = Color3.fromRGB(30, 3, 15) }, 0.15)
+    tw(closeStroke, { Thickness = 1 }, 0.15)
+end)
+
+-- ==================== INPUT ====================
+local InputLabel = Instance.new("TextLabel")
+InputLabel.Size = UDim2.new(1, -20, 0, 14); InputLabel.Position = UDim2.new(0, 10, 0, 32)
+InputLabel.BackgroundTransparency = 1; InputLabel.Text = "> COLE O LOADSTRING:"
+InputLabel.TextColor3 = BTNGET; InputLabel.TextSize = 10
+InputLabel.Font = Enum.Font.Code; InputLabel.TextXAlignment = Enum.TextXAlignment.Left
+InputLabel.Parent = MainFrame
+
+local InputBox = Instance.new("TextBox")
+InputBox.Size = UDim2.new(1, -20, 0, 44); InputBox.Position = UDim2.new(0, 10, 0, 48)
+InputBox.BackgroundColor3 = TXTBG; InputBox.BorderSizePixel = 0; InputBox.Text = ""
+InputBox.PlaceholderText = 'loadstring(game:HttpGet("..."))()'
+InputBox.PlaceholderColor3 = Color3.fromRGB(70, 80, 110)
+InputBox.TextColor3 = BTNGET; InputBox.TextSize = 10; InputBox.Font = Enum.Font.Code
+InputBox.TextXAlignment = Enum.TextXAlignment.Left; InputBox.TextYAlignment = Enum.TextYAlignment.Top
+InputBox.ClearTextOnFocus = false; InputBox.MultiLine = true; InputBox.TextWrapped = true
+InputBox.Parent = MainFrame
+local ic = Instance.new("UICorner"); ic.CornerRadius = UDim.new(0, 5); ic.Parent = InputBox
+local inputStroke = Instance.new("UIStroke")
+inputStroke.Color = Color3.fromRGB(50, 30, 80); inputStroke.Thickness = 1; inputStroke.Parent = InputBox
+local ip = Instance.new("UIPadding")
+ip.PaddingLeft = UDim.new(0, 6); ip.PaddingRight = UDim.new(0, 6)
+ip.PaddingTop = UDim.new(0, 5); ip.PaddingBottom = UDim.new(0, 5); ip.Parent = InputBox
+
+InputBox.Focused:Connect(function()
+    tw(inputStroke, { Color = BTNGET, Thickness = 1.5 }, 0.12)
+end)
+InputBox.FocusLost:Connect(function()
+    tw(inputStroke, { Color = Color3.fromRGB(50, 30, 80), Thickness = 1 }, 0.15)
+end)
+
+-- ==================== SCROLL ====================
+local ScrollLabel = Instance.new("TextLabel")
+ScrollLabel.Size = UDim2.new(1, -20, 0, 14); ScrollLabel.Position = UDim2.new(0, 10, 0, 96)
+ScrollLabel.BackgroundTransparency = 1; ScrollLabel.Text = "> CODIGO CAPTURADO:"
+ScrollLabel.TextColor3 = BTNSAVE; ScrollLabel.TextSize = 10
+ScrollLabel.Font = Enum.Font.Code; ScrollLabel.TextXAlignment = Enum.TextXAlignment.Left
+ScrollLabel.Parent = MainFrame
+
+local ScrollFrame = Instance.new("ScrollingFrame")
+ScrollFrame.Size = UDim2.new(1, -20, 0, 182); ScrollFrame.Position = UDim2.new(0, 10, 0, 112)
+ScrollFrame.BackgroundColor3 = SCROLLBG; ScrollFrame.BorderSizePixel = 0
+ScrollFrame.ScrollBarThickness = 4
+ScrollFrame.ScrollBarImageColor3 = BTNGET
+ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+ScrollFrame.Parent = MainFrame
+local sc = Instance.new("UICorner"); sc.CornerRadius = UDim.new(0, 5); sc.Parent = ScrollFrame
+local scrollStroke = Instance.new("UIStroke")
+scrollStroke.Color = Color3.fromRGB(40, 20, 70); scrollStroke.Thickness = 1; scrollStroke.Parent = ScrollFrame
+local sp = Instance.new("UIPadding")
+sp.PaddingLeft = UDim.new(0, 6); sp.PaddingRight = UDim.new(0, 6)
+sp.PaddingTop = UDim.new(0, 5); sp.PaddingBottom = UDim.new(0, 5); sp.Parent = ScrollFrame
+
+local ScrollContent = Instance.new("TextLabel")
+ScrollContent.Size = UDim2.new(1, 0, 0, 0); ScrollContent.BackgroundTransparency = 1
+ScrollContent.Text = ""; ScrollContent.TextColor3 = BTNGET; ScrollContent.TextSize = 10
+ScrollContent.Font = Enum.Font.Code; ScrollContent.TextXAlignment = Enum.TextXAlignment.Left
+ScrollContent.TextYAlignment = Enum.TextYAlignment.Top; ScrollContent.TextWrapped = true
+ScrollContent.AutomaticSize = Enum.AutomaticSize.Y
+ScrollContent.Parent = ScrollFrame
+
+local function setScrollText(text)
+    ScrollContent.Text = text
+    ScrollContent.Size = UDim2.new(1, 0, 0, 0)
+    task.wait()
+    ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, ScrollContent.AbsoluteSize.Y)
+    ScrollFrame.CanvasPosition = Vector2.new(0, 0)
+end
+
+-- ==================== BOTOES ====================
+local ButtonContainer = Instance.new("Frame")
+ButtonContainer.Size = UDim2.new(1, -20, 0, 30); ButtonContainer.Position = UDim2.new(0, 10, 1, -38)
+ButtonContainer.BackgroundTransparency = 1; ButtonContainer.Parent = MainFrame
+
+local function mkBtn(text, color, xPos, width)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(width, -5, 1, 0); b.Position = UDim2.new(xPos, 0, 0, 0)
+    b.BackgroundColor3 = color:Lerp(Color3.new(0,0,0), 0.78)
+    b.Text = text; b.TextColor3 = color
+    b.TextSize = 11; b.Font = Enum.Font.GothamBold; b.BorderSizePixel = 0
+    b.AutoButtonColor = false
+    b.Parent = ButtonContainer
+
+    local corner = Instance.new("UICorner"); corner.CornerRadius = UDim.new(0, 5); corner.Parent = b
+
+    local st = Instance.new("UIStroke")
+    st.Color = color; st.Thickness = 1.4; st.Transparency = 0.1; st.Parent = b
+
+    local glow = Instance.new("UIStroke")
+    glow.Color = color; glow.Thickness = 3; glow.Transparency = 0.7; glow.Parent = b
+
+    local grad = Instance.new("UIGradient")
+    grad.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, color:Lerp(Color3.new(1,1,1), 0.15):Lerp(Color3.new(0,0,0), 0.6)),
+        ColorSequenceKeypoint.new(1, color:Lerp(Color3.new(0,0,0), 0.88)),
+    }
+    grad.Rotation = 90
+    grad.Parent = b
+
+    b.MouseEnter:Connect(function()
+        tw(st, { Thickness = 2, Transparency = 0 }, 0.12)
+        tw(glow, { Transparency = 0.35 }, 0.12)
+        tw(b, { BackgroundColor3 = color:Lerp(Color3.new(0,0,0), 0.55), TextColor3 = Color3.new(1,1,1) }, 0.12)
+    end)
+    b.MouseLeave:Connect(function()
+        tw(st, { Thickness = 1.4, Transparency = 0.1 }, 0.15)
+        tw(glow, { Transparency = 0.7 }, 0.15)
+        tw(b, { BackgroundColor3 = color:Lerp(Color3.new(0,0,0), 0.78), TextColor3 = color }, 0.15)
+    end)
+    b.MouseButton1Down:Connect(function()
+        tw(b, { BackgroundColor3 = color:Lerp(Color3.new(0,0,0), 0.42) }, 0.06)
+    end)
+    b.MouseButton1Up:Connect(function()
+        tw(b, { BackgroundColor3 = color:Lerp(Color3.new(0,0,0), 0.55) }, 0.1)
+    end)
+
+    return b
+end
+
+local GetBtn = mkBtn("GET", BTNGET, 0, 0.34)
+local SaveBtn = mkBtn("SAVE", BTNSAVE, 0.34, 0.33)
+local ClearBtn = mkBtn("LIMPAR", BTNCLR, 0.67, 0.34)
+
+-- ==================== DRAG / CLOSE ====================
+local dragging = false
+local dragStart, startPos
+
+Header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true; dragStart = input.Position; startPos = MainFrame.Position
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local d = input.Position - dragStart
+        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
+    end
+end)
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
+CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
+
+-- ============================================================
+-- NUCLEO INTOCADO — igual ao original
+-- ============================================================
+local originalLoadstring = loadstring
+local originalLoad = load
+
+GetBtn.MouseButton1Click:Connect(function()
+    local txt = InputBox.Text
+    if txt == "" then
+        setScrollText("[!] Cole um loadstring primeiro.")
+        return
+    end
+
+    setScrollText("[...] Executando loadstring e interceptando source...")
+
+    local capturedSource = nil
+
+    getfenv().loadstring = function(src, chunkname)
+        if type(src) == "string" and #src > 0 then
+            capturedSource = src
+            setScrollText(src)
+        end
+        return originalLoadstring(src, chunkname)
+    end
+
+    getfenv().load = function(chunk, chunkname, mode, env)
+        if type(chunk) == "string" and #chunk > 0 then
+            capturedSource = chunk
+            setScrollText(chunk)
+        end
+        return originalLoad(chunk, chunkname, mode, env)
+    end
+
+    local success, err = pcall(function()
+        local fn = originalLoadstring(txt, "user_loader")
+        if not fn then
+            error("Loadstring invalido")
+        end
+        fn()
+    end)
+
+    getfenv().loadstring = originalLoadstring
+    getfenv().load = originalLoad
+
+    if capturedSource then
+        setScrollText(capturedSource)
+    else
+        if success then
+            setScrollText("[!] O loadstring executou mas nao chamou loadstring/load com uma string.\n\n" ..
+                "Isso acontece quando o script usa game:HttpGet direto e executa o retorno,\n" ..
+                "ou quando o codigo ja estava compilado em bytecode.")
+        else
+            setScrollText("[X] Erro ao executar: " .. tostring(err))
+        end
+    end
+end)
+
+-- Save (INTOCADO)
+SaveBtn.MouseButton1Click:Connect(function()
+    local code = ScrollContent.Text
+    if code == "" or code:sub(1, 1) == "[" then return end
+
+    if ScreenGui:FindFirstChild("SavePopup") then ScreenGui.SavePopup:Destroy() end
+
+    local Popup = Instance.new("Frame")
+    Popup.Name = "SavePopup"
+    Popup.Size = UDim2.new(0, 280, 0, 140)
+    Popup.Position = UDim2.new(0.5, -140, 0.5, -70)
+    Popup.BackgroundColor3 = BG; Popup.BorderSizePixel = 0; Popup.ZIndex = 10
+    Popup.Parent = ScreenGui
+    local pc = Instance.new("UICorner"); pc.CornerRadius = UDim.new(0, 6); pc.Parent = Popup
+    local ps1 = Instance.new("UIStroke"); ps1.Color = BTNSAVE; ps1.Thickness = 1.5; ps1.Parent = Popup
+    local ps2 = Instance.new("UIStroke"); ps2.Color = BTNSAVE; ps2.Thickness = 4; ps2.Transparency = 0.75; ps2.Parent = Popup
+
+    local pt = Instance.new("TextLabel")
+    pt.Size = UDim2.new(1, -20, 0, 24); pt.Position = UDim2.new(0, 10, 0, 10)
+    pt.BackgroundTransparency = 1; pt.Text = "> NOME DO ARQUIVO (.txt)"
+    pt.TextColor3 = BTNSAVE; pt.TextSize = 11; pt.Font = Enum.Font.Code
+    pt.ZIndex = 11; pt.Parent = Popup
+
+    local nb = Instance.new("TextBox")
+    nb.Size = UDim2.new(1, -20, 0, 28); nb.Position = UDim2.new(0, 10, 0, 38)
+    nb.BackgroundColor3 = TXTBG; nb.BorderSizePixel = 0; nb.Text = "script.txt"
+    nb.TextColor3 = BTNGET; nb.TextSize = 11; nb.Font = Enum.Font.Code
+    nb.ZIndex = 11; nb.Parent = Popup
+    local nbc = Instance.new("UICorner"); nbc.CornerRadius = UDim.new(0, 4); nbc.Parent = nb
+    local nbs = Instance.new("UIStroke"); nbs.Color = Color3.fromRGB(50, 30, 80); nbs.Thickness = 1; nbs.Parent = nb
+
+    local cb = Instance.new("TextButton")
+    cb.Size = UDim2.new(0.5, -15, 0, 28); cb.Position = UDim2.new(0, 10, 1, -38)
+    cb.BackgroundColor3 = BTNGET:Lerp(Color3.new(0,0,0), 0.75)
+    cb.Text = "SALVAR"; cb.TextColor3 = BTNGET
+    cb.TextSize = 12; cb.Font = Enum.Font.GothamBold; cb.BorderSizePixel = 0
+    cb.AutoButtonColor = false; cb.ZIndex = 11; cb.Parent = Popup
+    local cbc = Instance.new("UICorner"); cbc.CornerRadius = UDim.new(0, 4); cbc.Parent = cb
+    local cbs = Instance.new("UIStroke"); cbs.Color = BTNGET; cbs.Thickness = 1.5; cbs.Parent = cb
+
+    local xb = Instance.new("TextButton")
+    xb.Size = UDim2.new(0.5, -15, 0, 28); xb.Position = UDim2.new(0.5, 5, 1, -38)
+    xb.BackgroundColor3 = BTNCLR:Lerp(Color3.new(0,0,0), 0.75)
+    xb.Text = "CANCELAR"; xb.TextColor3 = BTNCLR
+    xb.TextSize = 12; xb.Font = Enum.Font.GothamBold; xb.BorderSizePixel = 0
+    xb.AutoButtonColor = false; xb.ZIndex = 11; xb.Parent = Popup
+    local xbc = Instance.new("UICorner"); xbc.CornerRadius = UDim.new(0, 4); xbc.Parent = xb
+    local xbs = Instance.new("UIStroke"); xbs.Color = BTNCLR; xbs.Thickness = 1.5; xbs.Parent = xb
+
+    xb.MouseButton1Click:Connect(function() Popup:Destroy() end)
+
+    cb.MouseButton1Click:Connect(function()
+        local name = nb.Text
+        if name == "" then name = "script.txt" end
+        if not name:match("%.%w+$") then name = name .. ".txt" end
+        name = name:gsub("[^%w%.%-_]", "_")
+
+        local ok, err = pcall(function()
+            if not writefile then error("writefile nao disponivel") end
+            writefile(name, code)
+        end)
+
+        if ok then
+            Popup:Destroy()
+            local n = Instance.new("TextLabel")
+            n.Size = UDim2.new(0, 260, 0, 30); n.Position = UDim2.new(0.5, -130, 0, 10)
+            n.BackgroundColor3 = Color3.fromRGB(4, 15, 20)
+            n.Text = "[OK] " .. name
+            n.TextColor3 = BTNGET; n.TextSize = 11; n.Font = Enum.Font.GothamBold
+            n.ZIndex = 20; n.Parent = ScreenGui
+            local nc = Instance.new("UICorner"); nc.CornerRadius = UDim.new(0, 6); nc.Parent = n
+            local ns = Instance.new("UIStroke"); ns.Color = BTNGET; ns.Thickness = 1.5; ns.Parent = n
+            task.wait(2); n:Destroy()
+        else
+            nb.Text = "Erro: " .. tostring(err)
+        end
+    end)
+end)
+
+ClearBtn.MouseButton1Click:Connect(function()
+    InputBox.Text = ""
+    setScrollText("")
+    ScrollFrame.CanvasPosition = Vector2.new(0, 0)
+end)
+
+print("[R7FLOW AUTH] Cyberpunk Dark (UI refinada) carregado.")
